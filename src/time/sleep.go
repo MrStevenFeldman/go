@@ -100,14 +100,20 @@ func NewTimer(d Duration) *Timer {
 //
 // Resetting a timer must take care not to race with the send into t.C
 // that happens when the current timer expires.
+//
 // If a program has already received a value from t.C, the timer is known
 // to have expired, and t.Reset can be used directly.
-// If a program has not yet received a value from t.C, however,
-// the timer must be stopped and—if Stop reports that the timer expired
-// before being stopped—the channel explicitly drained:
+// 
+// If the state of the timer is not known, then the timer should be stopped
+// and its channel explicitly drained:
 //
 // 	if !t.Stop() {
-// 		<-t.C
+//              select {
+// 		// Ensure the channel is drained.
+// 		case <-t.C:
+// 		// Do not block if the channel is already drained.
+//              default:
+// 		}
 // 	}
 // 	t.Reset(d)
 //
